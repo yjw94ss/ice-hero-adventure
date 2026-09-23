@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#09223e">
+<title>冰人奇境 · 五关横版冒险</title>
+<style>
+  :root{color-scheme:dark;--ink:#edf9ff;--muted:#a9c9dc;--sky:#8bd9f3;--blue:#4ec5ed;--navy:#071b32;--panel:rgba(11,35,59,.86);--line:rgba(205,242,255,.2);--gold:#ffdc75}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--navy);font-family:ui-rounded,"SF Pro Rounded","PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);user-select:none}
+  button{font:inherit;color:inherit}
+  #app{position:relative;width:100%;height:100dvh;min-height:420px;overflow:hidden;background:linear-gradient(150deg,#16496b 0%,#102f51 56%,#071b32 100%)}
+  #game{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .topbar{position:absolute;z-index:3;top:max(14px,env(safe-area-inset-top));left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+  .hud-block{display:flex;align-items:center;gap:9px;min-height:46px;padding:7px 12px;border:1px solid var(--line);border-radius:16px;background:rgba(8,30,51,.72);box-shadow:0 8px 26px rgba(0,0,0,.15);backdrop-filter:blur(12px);pointer-events:auto}
+  .level-label{display:flex;flex-direction:column;gap:1px;min-width:130px}.level-label b{font-size:14px;letter-spacing:.02em}.level-label small{font-size:11px;color:var(--muted)}
+  .meter{font-weight:800;font-size:14px;white-space:nowrap}.heart-meter{color:#ffb4bf;letter-spacing:1px}.artifact-meter{color:var(--gold)}
+  .icon-btn{width:34px;height:34px;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:rgba(255,255,255,.1);cursor:pointer;font-size:16px;transition:transform .15s,background .15s}.icon-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.2)}
+  .boss-bar{position:absolute;left:50%;top:82px;transform:translateX(-50%);width:min(330px,62vw);padding:8px 12px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(8,30,51,.76);display:none;text-align:center}.boss-title{font-size:11px;color:#d6d0ff;font-weight:800}.boss-track{height:8px;background:#372e55;border-radius:9px;margin-top:6px;overflow:hidden}.boss-fill{height:100%;width:100%;background:linear-gradient(90deg,#c88aff,#ff91b5);border-radius:9px;transition:width .25s}
+  .topbar[hidden],.level-caption[hidden],.touch-controls[hidden]{display:none!important}
+  .toast{position:absolute;z-index:4;top:18%;left:50%;transform:translate(-50%,-8px);padding:10px 17px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(6,26,47,.82);color:#fff5c8;font-weight:800;box-shadow:0 8px 28px rgba(0,0,0,.22);opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
+  .touch-controls{position:absolute;z-index:4;left:0;right:0;bottom:max(13px,env(safe-area-inset-bottom));display:none;align-items:flex-end;justify-content:space-between;padding:0 16px;pointer-events:none}.touch-group{display:flex;gap:10px;pointer-events:auto}.touch-btn{width:64px;height:64px;border:1px solid rgba(255,255,255,.42);border-radius:50%;background:rgba(9,38,62,.38);backdrop-filter:blur(6px);box-shadow:0 5px 14px rgba(0,0,0,.2);font-size:23px;font-weight:900;color:#effbff;touch-action:none}.touch-btn:active,.touch-btn.down{background:rgba(76,194,232,.58);transform:scale(.96)}.touch-btn.action{font-size:18px}.touch-btn.interact{width:52px;height:52px;font-size:14px}
+  .screen{position:absolute;z-index:5;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(3,17,34,.48);backdrop-filter:blur(5px)}.screen.hidden{display:none!important}
+  .panel{width:min(760px,94vw);max-height:min(92dvh,820px);overflow:auto;border:1px solid rgba(219,246,255,.24);border-radius:28px;background:linear-gradient(148deg,rgba(13,47,75,.96),rgba(7,27,48,.97));box-shadow:0 26px 90px rgba(0,0,0,.38);padding:clamp(20px,4vw,34px);text-align:center}
+  .brand{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border:1px solid rgba(172,232,255,.22);border-radius:999px;color:#b9eaff;background:rgba(99,194,230,.08);font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  h1{margin:10px 0 4px;font-size:clamp(32px,6vw,58px);line-height:1.05;letter-spacing:.015em;text-shadow:0 5px 25px rgba(92,205,255,.24)}
+  .subtitle{max-width:570px;margin:10px auto 18px;color:#b5d6e8;font-size:14px;line-height:1.65}
+  .hero-note{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px auto 19px;color:#d4f4ff;font-size:13px}.hero-dot{width:11px;height:11px;border-radius:50%;background:#8fe8ff;box-shadow:0 0 18px #74dfff}
+  .level-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:16px 0 17px;text-align:left}
+  .level-card{position:relative;min-height:119px;padding:12px 11px;border:1px solid rgba(202,238,255,.18);border-radius:17px;background:rgba(255,255,255,.055);text-align:left;cursor:pointer;transition:transform .16s,border-color .16s,background .16s;overflow:hidden}
+  .level-card:hover:not(:disabled){transform:translateY(-3px);border-color:rgba(125,221,255,.7);background:rgba(107,207,244,.12)}.level-card.selected{border-color:#91e5ff;background:rgba(89,198,235,.16);box-shadow:0 0 0 2px rgba(102,214,255,.12)}.level-card:disabled{opacity:.4;cursor:not-allowed;filter:saturate(.55)}
+  .level-number{display:block;color:#79d9fa;font-size:10px;font-weight:900;letter-spacing:.14em}.level-title{display:block;margin:6px 0 4px;font-size:13px;font-weight:900}.level-mechanic{display:block;min-height:30px;color:#afcbda;font-size:10px;line-height:1.45}.level-item{display:block;margin-top:7px;color:#ffe9a3;font-size:10px;font-weight:800}
+  .actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}.primary,.secondary{min-width:150px;padding:12px 19px;border:0;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer;transition:transform .14s,filter .14s}.primary{color:#07223a;background:linear-gradient(135deg,#b8f3ff,#60ccef);box-shadow:0 7px 0 #258db4,0 12px 25px rgba(24,179,226,.16)}.secondary{color:#e4f7ff;border:1px solid rgba(206,244,255,.18);background:rgba(255,255,255,.08)}.primary:hover,.secondary:hover{filter:brightness(1.08);transform:translateY(-1px)}.primary:active{transform:translateY(3px);box-shadow:0 3px 0 #258db4}
+  .controls-copy{margin:18px auto 0;color:#9fc2d7;font-size:11px;line-height:1.8}.key{display:inline-block;padding:2px 6px;margin:0 2px;border:1px solid rgba(205,241,255,.22);border-radius:5px;background:rgba(255,255,255,.08);color:#eefaff;font-weight:800}
+  .result-icon{font-size:51px;line-height:1;margin:6px 0 9px;filter:drop-shadow(0 0 20px rgba(142,224,255,.55))}.result-title{font-size:clamp(29px,5vw,45px)}.result-copy{margin:10px auto 22px;color:#b5d6e8;line-height:1.7}.result-item{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid rgba(255,227,147,.3);border-radius:999px;color:#ffe7a0;background:rgba(255,221,117,.08);font-size:13px;font-weight:800}
+  .level-caption{position:absolute;z-index:2;left:50%;bottom:18px;transform:translateX(-50%);padding:6px 11px;border-radius:999px;background:rgba(8,28,48,.42);color:rgba(231,248,255,.76);font-size:11px;pointer-events:none;white-space:nowrap}
+  @media(max-width:760px){.topbar{left:9px;right:9px;gap:5px}.hud-block{gap:5px;padding:6px 8px;min-height:41px;border-radius:13px}.level-label{min-width:0}.level-label b{font-size:12px}.level-label small{display:none}.meter{font-size:11px}.icon-btn{width:30px;height:30px}.touch-controls{display:flex}.level-caption{display:none}.level-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:34dvh;overflow:auto}.level-card{min-height:88px}.level-card:last-child{grid-column:span 2}.screen{padding:10px}.panel{padding:20px 15px;border-radius:22px}.controls-copy{margin-top:12px}.boss-bar{top:60px}}
+  @media(max-height:550px) and (min-width:761px){.panel{padding:18px 24px}.subtitle{margin:7px auto 10px}.level-grid{margin:10px 0}.level-card{min-height:98px}.controls-copy{margin-top:10px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="冰人奇境游戏画面"></canvas>
+  <div class="topbar" id="hud" hidden>
+    <div class="hud-block level-label"><b id="hud-title">冰晶村</b><small id="hud-subtitle"></small></div>
+    <div class="hud-block"><span class="meter heart-meter" id="hearts">♥ ♥ ♥</span><span class="meter artifact-meter" id="artifact">✿ 0/1</span></div>
+    <div class="hud-block"><button class="icon-btn" id="restart" aria-label="重玩本关" title="重玩本关 (R)">↻</button><button class="icon-btn" id="pause" aria-label="暂停" title="暂停 (Esc)">Ⅱ</button></div>
+  </div>
+  <div class="boss-bar" id="bossbar"><div class="boss-title">极光守门人</div><div class="boss-track"><div class="boss-fill" id="bossfill"></div></div></div>
+  <div class="toast" id="toast"></div>
+  <div class="level-caption" id="caption" hidden>空格 / W 跳跃 · X 发射冰球</div>
+  <div class="touch-controls" id="touch" aria-label="触屏操作" hidden>
+    <div class="touch-group"><button class="touch-btn" data-control="left" aria-label="向左">←</button><button class="touch-btn" data-control="right" aria-label="向右">→</button></div>
+    <div class="touch-group"><button class="touch-btn action" data-control="interact" aria-label="互动">互动</button><button class="touch-btn action" data-control="shoot" aria-label="发射冰球">❄</button><button class="touch-btn" data-control="jump" aria-label="跳跃">↑</button></div>
+  </div>
+
+  <section class="screen" id="menu">
+    <div class="panel">
+      <div class="brand"><span>✦</span> ORIGINAL ICE ADVENTURE</div>
+      <h1>冰人奇境</h1>
+      <p class="subtitle">踩过雪地、风林与镜湖，带着勇气穿过五段不同的冒险。没有倒计时，摔倒也能从存档点重新出发。</p>
+      <div class="hero-note"><span class="hero-dot"></span><span>主角：冰仔</span><span>·</span><span>五关手绘场景</span><span>·</span><span>每关一件独有宝物</span></div>
+      <div class="level-grid" id="level-grid"></div>
+      <div class="actions"><button class="primary" id="start">开始冒险　➜</button></div>
+      <div class="controls-copy"><span class="key">←</span><span class="key">→</span> / <span class="key">A</span><span class="key">D</span> 移动　 <span class="key">空格</span> 跳跃　 <span class="key">X</span> 冰球　 <span class="key">E</span> 互动<br>建议横屏体验；手机可使用画面下方的大按钮。</div>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="pause-screen">
+    <div class="panel" style="max-width:430px">
+      <div class="result-icon">❄</div><h2 class="result-title">歇一会儿</h2>
+      <p class="result-copy">勇敢的冰仔还在原地等你。</p>
+      <div class="actions"><button class="primary" id="resume">继续游戏</button><button class="secondary" id="pause-restart">重玩本关</button><button class="secondary" id="to-menu">回到关卡选择</button></div>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="clear-screen">
+    <div class="panel" style="max-width:490px">
+      <div class="result-icon">✧</div><h2 class="result-title" id="clear-title">这一关通过啦</h2>
+      <p class="result-copy" id="clear-copy"></p><div class="result-item" id="clear-item"></div>
+      <div class="actions" style="margin-top:22px"><button class="primary" id="next">下一关　➜</button><button class="secondary" id="clear-menu">关卡选择</button></div>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="win-screen">
+    <div class="panel" style="max-width:490px">
+      <div class="result-icon">🏆</div><h2 class="result-title">极光再次亮起！</h2>
+      <p class="result-copy">冰仔穿过了五种不同的冒险，也带回了极光之心。全部关卡都已解锁。</p>
+      <div class="actions"><button class="primary" id="play-again">再玩一次</button><button class="secondary" id="win-menu">关卡选择</button></div>
+    </div>
+  </section>
+</div>
+
+<script src="game-core.js"></script>
+<script>
+(function(){
+  'use strict';
+  const Core = window.IceHeroCore;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const $ = (id) => document.getElementById(id);
+  const keys = {left:false,right:false,jump:false,shoot:false,interact:false};
+  const screens = ['menu','pause-screen','clear-screen','win-screen'];
+  const progressKey = 'ice_hero_adventure_unlocked_v1';
+  let game = Core.createGame(0), levelIndex = 0, selectedLevel = 0, unlocked = loadProgress();
+  let mode = 'menu', viewW = innerWidth, viewH = 540, scale = 1, dpr = 1, cameraX = 0;
+  let lastTime = 0, toastTimer = 0, toastMessage = '', animationTime = 0;
+
+  function loadProgress(){try{return Math.max(0,Math.min(4,Number(localStorage.getItem(progressKey))||0));}catch(_){return 0;}}
+  function saveProgress(value){unlocked=Math.max(unlocked,value);try{localStorage.setItem(progressKey,String(unlocked));}catch(_){}}
+  function showScreen(id){screens.forEach((screen)=>$(screen).classList.add('hidden'));if(id)$(id).classList.remove('hidden');}
+  function showToast(message){toastMessage=message;toastTimer=1.45;const el=$('toast');el.textContent=message;el.classList.add('show');}
+  function resize(){dpr=Math.min(2,window.devicePixelRatio||1);scale=Math.max(.65,window.innerHeight/540);viewH=window.innerHeight/scale;viewW=window.innerWidth/scale;canvas.width=Math.round(window.innerWidth*dpr);canvas.height=Math.round(window.innerHeight*dpr);ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);}
+  window.addEventListener('resize',resize,{passive:true});resize();
+
+  function renderLevelCards(){
+    const grid=$('level-grid');grid.innerHTML='';
+    Core.LEVELS.forEach((level,index)=>{
+      const button=document.createElement('button');button.type='button';button.className='level-card'+(selectedLevel===index?' selected':'');button.disabled=index>unlocked;button.setAttribute('aria-label',`第${index+1}关 ${level.name}${index>unlocked?'，未解锁':''}`);
+      button.innerHTML=`<span class="level-number">STAGE 0${index+1}${index>unlocked?'　🔒':''}</span><span class="level-title">${level.name}</span><span class="level-mechanic">${level.gimmick}</span><span class="level-item">${level.item.glyph} ${level.item.name}</span>`;
+      button.addEventListener('click',()=>{selectedLevel=index;renderLevelCards();});grid.appendChild(button);
+    });
+  }
+  renderLevelCards();
+
+  function startLevel(index){
+    levelIndex=Math.max(0,Math.min(Core.LEVELS.length-1,index));selectedLevel=levelIndex;game=Core.createGame(levelIndex);mode='playing';showScreen(null);$('hud').hidden=false;$('caption').hidden=false;$('touch').hidden=false;$('bossbar').style.display=game.boss?'block':'none';updateHud();
+    Object.keys(keys).forEach((key)=>keys[key]=false);lastTime=0;
+  }
+  function updateHud(){
+    const level=game.level;$('hud-title').textContent=`${String(levelIndex+1).padStart(2,'0')} · ${level.name}`;$('hud-subtitle').textContent=level.gimmick;
+    $('hearts').textContent=Array.from({length:3},(_,i)=>i<game.player.lives?'♥':'♡').join(' ');
+    $('artifact').textContent=`${level.item.glyph} ${game.itemCollected?1:0}/1`;
+    if(game.boss){$('bossfill').style.width=`${Math.max(0,game.boss.hp)/3*100}%`;}
+  }
+  function goMenu(){mode='menu';game=Core.createGame(0);$('hud').hidden=true;$('caption').hidden=true;$('touch').hidden=true;$('bossbar').style.display='none';renderLevelCards();showScreen('menu');Object.keys(keys).forEach((key)=>keys[key]=false);}
+  function pause(){if(mode!=='playing')return;mode='paused';$('caption').hidden=true;$('touch').hidden=true;showScreen('pause-screen');Object.keys(keys).forEach((key)=>keys[key]=false);}
+  function resume(){if(mode!=='paused')return;mode='playing';$('caption').hidden=false;$('touch').hidden=false;showScreen(null);lastTime=0;}
+  function finishLevel(){mode='clear';$('caption').hidden=true;$('touch').hidden=true;saveProgress(Math.min(4,levelIndex+1));updateHud();$('clear-title').textContent=`${game.level.name} · 通关`;$('clear-copy').textContent=game.itemCollected?'找到了本关的专属宝物，继续向极光城堡前进吧！':'路线已经打通；回头还可以再来找本关的专属宝物。';$('clear-item').textContent=`${game.level.item.glyph} ${game.itemCollected?game.level.item.name:'本关宝物尚未收集'}`;$('next').textContent=levelIndex===Core.LEVELS.length-1?'完成冒险　✦':'下一关　➜';$('next').style.display='inline-block';showScreen('clear-screen');}
+  function processEvents(events){events.forEach((event)=>{if(event.type==='item')showToast(`获得 ${event.name}！`);if(event.type==='checkpoint')showToast('存档点已点亮');if(event.type==='mirror')showToast(event.active?'银桥显现了！':'银桥隐去了');if(event.type==='enemy-stomp')showToast('踩中啦！');if(event.type==='boss-hit')showToast(`命中守门人　${Math.max(0,event.hp)} / 3`);if(event.type==='respawn')showToast('从最近的存档点出发');if(event.type==='complete')finishLevel();});}
+
+  $('start').addEventListener('click',()=>startLevel(selectedLevel));$('restart').addEventListener('click',()=>startLevel(levelIndex));$('pause').addEventListener('click',pause);$('resume').addEventListener('click',resume);$('pause-restart').addEventListener('click',()=>startLevel(levelIndex));$('to-menu').addEventListener('click',goMenu);$('clear-menu').addEventListener('click',goMenu);$('win-menu').addEventListener('click',goMenu);$('play-again').addEventListener('click',()=>startLevel(0));
+  $('next').addEventListener('click',()=>{if(levelIndex===Core.LEVELS.length-1){mode='win';showScreen('win-screen');}else startLevel(levelIndex+1);});
+  $('start').focus({preventScroll:true});
+
+  function setControl(key,value){keys[key]=value;}
+  const keyMap={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump',ArrowUp:'jump',KeyW:'jump',KeyX:'shoot',KeyE:'interact'};
+  window.addEventListener('keydown',(event)=>{
+    if(['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(event.code))event.preventDefault();
+    if((event.code==='Escape'||event.code==='KeyP')&&mode==='playing'){pause();return;}if((event.code==='Escape'||event.code==='KeyP')&&mode==='paused'){resume();return;}
+    if(event.code==='KeyR'&&(mode==='playing'||mode==='paused')){startLevel(levelIndex);return;}
+    if(mode==='menu'&&event.code==='Enter'){startLevel(selectedLevel);return;}
+    const control=keyMap[event.code];if(control&&mode==='playing')setControl(control,true);
+  });
+  window.addEventListener('keyup',(event)=>{const control=keyMap[event.code];if(control)setControl(control,false);});
+  window.addEventListener('blur',()=>Object.keys(keys).forEach((key)=>keys[key]=false));
+  document.querySelectorAll('[data-control]').forEach((button)=>{
+    const control=button.dataset.control;
+    button.addEventListener('pointerdown',(event)=>{event.preventDefault();button.classList.add('down');button.setPointerCapture(event.pointerId);setControl(control,true);});
+    const release=(event)=>{event.preventDefault();button.classList.remove('down');setControl(control,false);};
+    button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
+  });
+
+  function roundRect(c,x,y,w,h,r,fill,stroke){c.beginPath();c.roundRect(x,y,w,h,r);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.stroke();}}
+  function circle(c,x,y,r,color){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=color;c.fill();}
+  function drawBackground(c,w,h,level,time,cam){
+    const gradient=c.createLinearGradient(0,0,0,h);gradient.addColorStop(0,level.palette[0]);gradient.addColorStop(1,level.palette[1]);c.fillStyle=gradient;c.fillRect(0,0,w,h);
+    c.globalAlpha=.2;c.fillStyle='#fff';
+    for(let i=0;i<42;i++){const x=((i*137+time*(12+i%4)-cam*.15)%(w+40)+w+40)%(w+40);const y=(i*83+Math.sin(time+i)*12)%h;c.beginPath();c.ellipse(x,y,1.5+(i%3),2+(i%4),0,0,Math.PI*2);c.fill();}
+    c.globalAlpha=1;
+    const shift=cam*.18;
+    for(let i=0;i<8;i++){const x=((i*210-shift)%(w+250)+w+250)%(w+250)-110;const hill=level.id==='obsidian-mine'?h-84:h-70;c.fillStyle=level.id==='obsidian-mine'?'rgba(47,37,61,.28)':'rgba(67,137,166,.19)';c.beginPath();c.ellipse(x,hill,150,70,0,Math.PI,Math.PI*2);c.fill();}
+    if(level.id==='pine-windwood'){
+      for(let i=0;i<7;i++){const x=((i*210-shift*1.4)%(w+160)+w+160)%(w+160)-70;const y=h-110-(i%3)*36;c.fillStyle='rgba(37,103,81,.35)';c.beginPath();c.moveTo(x,y-95);c.lineTo(x-48,y);c.lineTo(x+48,y);c.closePath();c.fill();c.fillRect(x-6,y,12,70);}
+    }
+    if(level.id==='aurora-castle'){
+      c.save();c.globalAlpha=.28;for(let i=0;i<3;i++){c.strokeStyle=['#8feaff','#ca9fff','#8cf6d1'][i];c.lineWidth=18;c.beginPath();c.moveTo(w*.2+i*70,-20);c.bezierCurveTo(w*.36+i*90,h*.35,w*.54-i*45,h*.1,w*.78+i*12,h*.4);c.stroke();}c.restore();
+    }
+  }
+  function drawPlatform(c,platform,level){
+    if(platform.hidden&&!game.mirrorsActive){c.save();c.globalAlpha=.22;roundRect(c,platform.x,platform.y,platform.w,platform.h,8,'rgba(196,241,255,.12)','rgba(220,249,255,.55)');c.restore();return;}
+    const isCart=platform.id==='minecart';const base=isCart?'#bd7f5d':level.palette[2];roundRect(c,platform.x,platform.y,platform.w,platform.h,7,base,'rgba(245,252,255,.36)');
+    c.fillStyle=isCart?'#ffcc7c':'rgba(234,251,255,.72)';c.fillRect(platform.x+5,platform.y+2,Math.max(0,platform.w-10),3);
+    c.fillStyle='rgba(22,56,80,.25)';for(let x=platform.x+14;x<platform.x+platform.w-6;x+=28)c.fillRect(x,platform.y+8,12,2);
+    if(isCart){roundRect(c,platform.x+18,platform.y-13,platform.w-36,12,4,'#a76448','rgba(255,226,177,.75)');circle(c,platform.x+25,platform.y+platform.h+4,7,'#3b3040');circle(c,platform.x+platform.w-25,platform.y+platform.h+4,7,'#3b3040');}
+  }
+  function drawHazards(c,level,time){
+    (level.hazards||[]).forEach((hazard)=>{
+      if(hazard.kind==='lava'){
+        const g=c.createLinearGradient(0,hazard.y,0,hazard.y+hazard.h);g.addColorStop(0,'#ffb04f');g.addColorStop(.32,'#f26456');g.addColorStop(1,'#682d54');c.fillStyle=g;c.fillRect(hazard.x,hazard.y,hazard.w,hazard.h);
+        c.strokeStyle='rgba(255,221,122,.8)';c.lineWidth=3;c.beginPath();for(let x=hazard.x;x<=hazard.x+hazard.w;x+=8){const y=hazard.y+4+Math.sin(x*.045+time*4)*3;if(x===hazard.x)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();
+      }else{c.fillStyle='rgba(37,68,103,.78)';c.fillRect(hazard.x,hazard.y,hazard.w,hazard.h);c.fillStyle='rgba(167,225,255,.45)';for(let x=hazard.x+8;x<hazard.x+hazard.w;x+=18){c.beginPath();c.moveTo(x,hazard.y+6);c.lineTo(x+5,hazard.y+15);c.lineTo(x+10,hazard.y+6);c.fill();}}
+    });
+  }
+  function drawMechanics(c,level,time){
+    (level.windZones||[]).forEach((zone)=>{c.save();c.fillStyle=zone.color;c.fillRect(zone.x,zone.y,zone.w,zone.h);c.strokeStyle='rgba(148,245,255,.72)';c.lineWidth=2;for(let y=zone.y+zone.h-18;y>zone.y+8;y-=30){const drift=Math.sin(time*2+y*.04)*9;c.beginPath();c.moveTo(zone.x+zone.w*.34+drift,y);c.lineTo(zone.x+zone.w*.5-drift,y-12);c.lineTo(zone.x+zone.w*.66+drift,y);c.stroke();}c.restore();});
+    (level.iceZones||[]).forEach((zone)=>{c.fillStyle='rgba(180,246,255,.7)';c.fillRect(zone.x,zone.y,zone.w,4);});
+    if(level.mirrorSwitch){const sw=level.mirrorSwitch;c.save();c.translate(sw.x,sw.y);c.fillStyle=game.mirrorsActive?'#b5f4ff':'#a69acd';c.beginPath();c.ellipse(0,-11,14,19,-.18,0,Math.PI*2);c.fill();c.strokeStyle='#f1f8ff';c.lineWidth=2;c.stroke();c.fillStyle='rgba(255,255,255,.6)';c.fillRect(-2,-27,4,35);c.fillStyle='#ffe9a4';c.fillRect(-18,8,36,5);c.restore();}
+  }
+  function drawItem(c,item,time){
+    if(game.itemCollected)return;const bob=Math.sin(time*3.4)*5;c.save();c.translate(item.x,item.y+bob);c.globalAlpha=.23;circle(c,0,0,21,item.color);c.globalAlpha=1;circle(c,0,0,14,'rgba(14,52,78,.72)');c.strokeStyle=item.color;c.lineWidth=2;c.beginPath();c.arc(0,0,16,0,Math.PI*2);c.stroke();c.fillStyle=item.color;c.font='bold 23px serif';c.textAlign='center';c.textBaseline='middle';c.fillText(item.glyph,0,0);c.restore();
+  }
+  function drawEnemy(c,enemy,time){
+    if(enemy.dead)return;const bob=Math.sin(time*5+enemy.x*.03)*2;c.save();c.translate(enemy.x,enemy.y+bob);
+    const colors={'滚雪球怪':'#ebf8ff','松果猫头鹰':'#bf8f67','熔岩鼹鼠':'#ef8158','镜湖光灵':'#b2a0ff'};const col=colors[enemy.type]||'#dff6ff';
+    c.fillStyle='rgba(7,29,49,.22)';c.beginPath();c.ellipse(enemy.w/2,enemy.h+3,enemy.w*.52,5,0,0,Math.PI*2);c.fill();
+    roundRect(c,0,0,enemy.w,enemy.h,enemy.h*.45,col,'rgba(255,255,255,.72)');circle(c,enemy.w*.35,enemy.h*.43,2.5,'#132b3d');circle(c,enemy.w*.68,enemy.h*.43,2.5,'#132b3d');
+    if(enemy.type==='松果猫头鹰'){c.fillStyle='#93694d';c.beginPath();c.moveTo(4,4);c.lineTo(9,-7);c.lineTo(14,5);c.fill();c.beginPath();c.moveTo(20,5);c.lineTo(26,-7);c.lineTo(30,5);c.fill();}
+    if(enemy.type==='熔岩鼹鼠'){c.fillStyle='#ffcf67';c.fillRect(6,-4,5,5);c.fillRect(23,-4,5,5);}
+    c.restore();
+  }
+  function drawBoss(c,boss,time){
+    if(!boss||boss.hp<=0)return;c.save();c.translate(boss.x,boss.y);const hover=Math.sin(time*2.5)*4;c.translate(0,hover);const frozen=boss.frozen>0;c.globalAlpha=boss.invuln>0?.65:1;
+    c.fillStyle='rgba(7,20,41,.28)';c.beginPath();c.ellipse(boss.w/2,boss.h+10,33,7,0,0,Math.PI*2);c.fill();
+    roundRect(c,3,0,boss.w-6,boss.h,18,frozen?'#b8f4ff':'#5b4b83','rgba(255,255,255,.72)');
+    c.fillStyle=frozen?'#e8ffff':'#d9c8ff';c.beginPath();c.moveTo(8,7);c.lineTo(1,-10);c.lineTo(17,1);c.fill();c.beginPath();c.moveTo(44,1);c.lineTo(54,-10);c.lineTo(49,10);c.fill();
+    circle(c,19,17,3.5,'#ffeb87');circle(c,36,17,3.5,'#ffeb87');roundRect(c,18,27,18,4,2,'#302744');
+    c.fillStyle='#ffda72';for(let i=0;i<boss.hp;i++)circle(c,9+i*17,-18,4,'#ffda72');c.restore();
+  }
+  function drawHero(c,player,time){
+    if(player.invuln>0&&Math.floor(time*15)%2===0)return;c.save();c.translate(player.x+player.w/2,player.y+player.h);if(player.facing<0)c.scale(-1,1);const walk=player.onGround?Math.sin(time*13)*2:0;
+    c.fillStyle='rgba(8,35,59,.22)';c.beginPath();c.ellipse(0,3,18,5,0,0,Math.PI*2);c.fill();
+    roundRect(c,-12,-25+walk,24,23,9,'#89e4f6','#f1fdff');circle(c,0,-30+walk,14,'#ddf9ff');circle(c,5,-31+walk,2.2,'#14344b');circle(c,-3,-31+walk,2.2,'#14344b');
+    c.fillStyle='#ff718e';c.beginPath();c.moveTo(-11,-20+walk);c.lineTo(11,-20+walk);c.lineTo(9,-15+walk);c.lineTo(-9,-15+walk);c.fill();c.fillStyle='#ffb3c2';c.beginPath();c.moveTo(8,-19+walk);c.lineTo(19,-15+walk);c.lineTo(11,-11+walk);c.fill();
+    roundRect(c,-13,-5+walk,11,5,2,'#2c719a');roundRect(c,3,-5-walk,11,5,2,'#2c719a');
+    c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=2;c.beginPath();c.arc(-2,-35+walk,8,3.6,5.4);c.stroke();c.restore();
+  }
+  function drawGoal(c,goal,time){
+    const glow=.35+Math.sin(time*3)*.12;c.save();c.translate(goal.x,goal.y);c.globalAlpha=glow;circle(c,goal.w/2,goal.h/2,38,'#bcf6ff');c.globalAlpha=1;roundRect(c,0,8,goal.w,goal.h-8,15,'#7be2cb','#e4fff7');roundRect(c,9,20,goal.w-18,goal.h-20,10,'#1d5069','rgba(255,255,255,.8)');circle(c,goal.w/2,10,6,'#ffe88e');c.restore();
+  }
+  function drawWorld(){
+    const w=viewW,h=viewH,level=game.level,player=game.player;cameraX=Math.max(0,Math.min(level.width-w,player.x-w*.38));
+    ctx.save();ctx.translate(0,(540-h)*.5);drawBackground(ctx,w,h,level,animationTime,cameraX);ctx.save();ctx.translate(-cameraX,0);
+    drawMechanics(ctx,level,animationTime);drawHazards(ctx,level,animationTime);game.platforms.forEach((platform)=>drawPlatform(ctx,platform,level));drawGoal(ctx,level.goal,animationTime);drawItem(ctx,level.item,animationTime);game.enemies.forEach((enemy)=>drawEnemy(ctx,enemy,animationTime));drawBoss(ctx,game.boss,animationTime);
+    game.projectiles.forEach((shot)=>{circle(ctx,shot.x+shot.w/2,shot.y+shot.h/2,shot.w/2,'#9ff4ff');ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(shot.x+shot.w/2,shot.y+shot.h/2,8,0,Math.PI*2);ctx.stroke();});drawHero(ctx,player,animationTime);ctx.restore();ctx.restore();
+  }
+  function frame(now){
+    const dt=lastTime?Math.min(.05,(now-lastTime)/1000):1/60;lastTime=now;animationTime=now/1000;
+    if(mode==='playing'){const events=Core.step(game,{left:keys.left,right:keys.right,jump:keys.jump,jumpHeld:keys.jump,shoot:keys.shoot,interact:keys.interact},dt);processEvents(events);updateHud();}
+    if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.remove('show');}
+    drawWorld();requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
